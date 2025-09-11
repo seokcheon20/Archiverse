@@ -2,7 +2,6 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 import { classNames } from "../util/lang"
 // @ts-ignore
 import script from "./scripts/comments.inline"
-import { StringDecoder } from "node:string_decoder"
 
 type Options = {
   provider: "giscus"
@@ -11,14 +10,13 @@ type Options = {
     repoId: string
     category: string
     categoryId: string
-    themeUrl?: StringDecoder
+    themeUrl?: string
     lightTheme?: string
     darkTheme?: string
     mapping?: "url" | "title" | "og:title" | "specific" | "number" | "pathname"
     strict?: boolean
     reactionsEnabled?: boolean
     inputPosition?: "top" | "bottom"
-    term?: string
     lang?: string
   }
 }
@@ -30,21 +28,14 @@ function boolToStringBool(b: boolean): string {
 export default ((opts: Options) => {
   const Comments: QuartzComponent = ({ displayClass, fileData, cfg }: QuartzComponentProps) => {
     // check if comments should be displayed according to frontmatter
-    // const disableComment: boolean =
-      // fileData.frontmatter?.comments === "false" ### this is what i had originally btw
-      // typeof fileData.frontmatter?.comments !== "undefined" &&
-      // (!fileData.frontmatter?.comments || fileData.frontmatter?.comments === "false")
-    // if (disableComment) {
-    // 2025-02-04: actually, I only want comments if I choose to enable them in frontmatter
-    const enableComment: boolean = 
-      fileData.frontmatter?.comments === "true"
-    if (!enableComment) {
+    const disableComment: boolean =
+      typeof fileData.frontmatter?.comments !== "undefined" &&
+      (!fileData.frontmatter?.comments || fileData.frontmatter?.comments === "false")
+    if (disableComment) {
       return <></>
     }
 
     return (
-      <div>
-        <h2>📗 Guestbook</h2>
       <div
         class={classNames(displayClass, "giscus")}
         data-repo={opts.options.repo}
@@ -61,10 +52,7 @@ export default ((opts: Options) => {
           opts.options.themeUrl ?? `https://${cfg.baseUrl ?? "example.com"}/static/giscus`
         }
         data-lang={opts.options.lang ?? "en"}
-        data-term={opts.options.term}
-      >
-      </div>
-      </div>
+      ></div>
     )
   }
 

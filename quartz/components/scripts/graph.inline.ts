@@ -68,30 +68,6 @@ type TweenNode = {
   stop: () => void
 }
 
-// workaround for pixijs webgpu issue: https://github.com/pixijs/pixijs/issues/11389
-async function determineGraphicsAPI(): Promise<"webgpu" | "webgl"> {
-  const adapter = await navigator.gpu?.requestAdapter().catch(() => null)
-  const device = adapter && (await adapter.requestDevice().catch(() => null))
-  if (!device) {
-    return "webgl"
-  }
-
-  const canvas = document.createElement("canvas")
-  const gl =
-    (canvas.getContext("webgl2") as WebGL2RenderingContext | null) ??
-    (canvas.getContext("webgl") as WebGLRenderingContext | null)
-
-  // we have to return webgl so pixijs automatically falls back to canvas
-  if (!gl) {
-    return "webgl"
-  }
-
-  const webglMaxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)
-  const webgpuMaxTextures = device.limits.maxSampledTexturesPerShaderStage
-
-  return webglMaxTextures === webgpuMaxTextures ? "webgpu" : "webgl"
-}
-
 async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   const slug = simplifySlug(fullSlug)
   const visited = getVisited()
@@ -110,21 +86,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     removeTags,
     showTags,
     focusOnHover,
-    excludeTags,
     enableRadial,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
-  const originalData: Map<SimpleSlug, ContentDetails> = new Map(
+  const data: Map<SimpleSlug, ContentDetails> = new Map(
     Object.entries<ContentDetails>(await fetchData).map(([k, v]) => [
       simplifySlug(k as FullSlug),
       v,
     ]),
-  )
-  // Take out files that have the tags in excludeTags
-  const data: Map<SimpleSlug, ContentDetails> = new Map(
-    [...originalData.entries()].filter(([key, value]) => {
-    return !value.tags?.some(tag => excludeTags.includes(tag))
-    })
   )
   const links: SimpleLinkData[] = []
   const tags: SimpleSlug[] = []
@@ -150,31 +119,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       for (const tag of localTags) {
         links.push({ source: source, target: tag })
       }
-
-      // Add hierarchical tag links
-      for (const tag of localTags) {
-        const parts = tag.split("/");
-        if (parts.length > 2) {
-          const parentTag = parts.slice(0, -1).join("/") as SimpleSlug;
-          if (!tags.includes(parentTag)) {
-            tags.push(parentTag);
-          }
-          if (!links.some(l => l.source === tag && l.target === parentTag)) {
-            links.push({ source: tag, target: parentTag });
-          }
-          // Draw link from parentTag to the node tagged with the subtag
-          if (!links.some(l => l.source === parentTag && l.target === source)) {
-            links.push({ source: parentTag, target: source });
-          }
-        }
-      }
     }
   }
 
   const neighbourhood = new Set<SimpleSlug>()
   const wl: (SimpleSlug | "__SENTINEL")[] = [slug, "__SENTINEL"]
   if (depth >= 0) {
-    // Compute the neighbourhood as before
     while (depth >= 0 && wl.length > 0) {
       // compute neighbours
       const cur = wl.shift()!
@@ -189,14 +139,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       }
     }
   } else {
-    // Fall back to the global graph (display all nodes)
     validLinks.forEach((id) => neighbourhood.add(id))
     if (showTags) tags.forEach((tag) => neighbourhood.add(tag))
-  }  
+  }
 
   const nodes = [...neighbourhood].map((url) => {
-    // const text = url.startsWith("tags/") ? "#" + url.substring(5) : (data.get(url)?.title ?? url)
-    const text = url.startsWith("tags/") ? "🔖" + url.substring(5) : (data.get(url)?.title ?? url)
+    const text = url.startsWith("tags/") ? "#" + url.substring(5) : (data.get(url)?.title ?? url)
     return {
       id: url,
       text,
@@ -217,23 +165,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   const height = Math.max(graph.offsetHeight, 250)
 
   // we virtualize the simulation and use pixi to actually render it
-  // Calculate the radius of the container circle
-  // const radius = Math.min(width, height) / 2 - 40 // 40px padding
   const simulation: Simulation<NodeData, LinkData> = forceSimulation<NodeData>(graphData.nodes)
     .force("charge", forceManyBody().strength(-100 * repelForce))
     .force("center", forceCenter().strength(centerForce))
     .force("link", forceLink(graphData.links).distance(linkDistance))
     .force("collide", forceCollide<NodeData>((n) => nodeRadius(n)).iterations(3))
 
-  if (enableRadial)
-    simulation.force("radial", forceRadial(0, 0, 0).strength(0.3))
-
-  // We want a fluid simulation so we keep the alpha target low at all times.
-  // simulation.alphaTarget(0.4)
-  setTimeout(() => {
-    simulation.alphaTarget(0.4);
-  }, 800);   
-
+  const radius = (Math.min(width, height) / 2) * 0.8
+  if (enableRadial) simulation.force("radial", forceRadial(radius).strength(0.2))
 
   // precompute style prop strings as pixi doesn't support css variables
   const cssVars = [
@@ -265,16 +204,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       return computedStyleMap["--gray"]
     }
   }
-  
+
   function nodeRadius(d: NodeData) {
     const numLinks = graphData.links.filter(
       (l) => l.source.id === d.id || l.target.id === d.id,
     ).length
-    if (/^\/$/.test(d.id)) { // this regex is making the index node bigger
-      return (1.5 + Math.sqrt(numLinks)) * 1.25
-    } else {
-      return 1.5 + Math.sqrt(numLinks * 0.75)
-    }
+    return 2 + Math.sqrt(numLinks)
   }
 
   let hoveredNodeId: string | null = null
@@ -414,7 +349,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   tweens.forEach((tween) => tween.stop())
   tweens.clear()
 
-  const pixiPreference = await determineGraphicsAPI()
   const app = new Application()
   await app.init({
     width,
@@ -423,7 +357,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     autoStart: false,
     autoDensity: true,
     backgroundAlpha: 0,
-    preference: pixiPreference,
+    preference: "webgpu",
     resolution: window.devicePixelRatio,
     eventMode: "static",
   })
@@ -452,15 +386,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         fontFamily: computedStyleMap["--bodyFont"],
       },
       resolution: window.devicePixelRatio * 4,
-      visible: false, // Initially hide all labels
-    });
-    label.scale.set(1 / scale);
-    (label as any).originalText = n.text;
-    (label as any).nodeId = n.id; //Store node id
-  
+    })
+    label.scale.set(1 / scale)
+
     let oldLabelOpacity = 0
     const isTagNode = nodeId.startsWith("tags/")
-    label.visible = (nodeId === slug || isTagNode);
     const gfx = new Graphics({
       interactive: true,
       label: nodeId,
@@ -471,25 +401,17 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       .circle(0, 0, nodeRadius(n))
       .fill({ color: isTagNode ? computedStyleMap["--light"] : color(n) })
       .on("pointerover", (e) => {
-        updateHoverInfo(e.target.label);
-        // Only show the label for the hovered node
-        nodeRenderData.forEach(rd => rd.label.visible = false); // Hide all labels first
-        const hoveredNode = nodeRenderData.find(rd => rd.simulationData.id === (gfx as any).label);
-        if(hoveredNode) {
-            hoveredNode.label.visible = true; // Show current label
-        }
+        updateHoverInfo(e.target.label)
+        oldLabelOpacity = label.alpha
         if (!dragging) {
-          renderPixiFromD3();
+          renderPixiFromD3()
         }
       })
       .on("pointerleave", () => {
-        updateHoverInfo(null);
-        // Hide non-current node label
-        nodeRenderData.forEach(rd => {
-          rd.label.visible = (rd.simulationData.id === slug || rd.simulationData.id.startsWith("tags/"));
-        });
+        updateHoverInfo(null)
+        label.alpha = oldLabelOpacity
         if (!dragging) {
-          renderPixiFromD3();
+          renderPixiFromD3()
         }
       })
 
@@ -534,7 +456,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         .container(() => app.canvas)
         .subject(() => graphData.nodes.find((n) => n.id === hoveredNodeId))
         .on("start", function dragstarted(event) {
-          if (!event.active) simulation.alphaTarget(0.4).restart()
+          if (!event.active) simulation.alphaTarget(1).restart()
           event.subject.fx = event.subject.x
           event.subject.fy = event.subject.y
           event.subject.__initialDragPos = {
@@ -558,7 +480,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           dragging = false
 
           // if the time between mousedown and mouseup is short, we consider it a click
-          if (Date.now() - dragStartTime < 300) {
+          if (Date.now() - dragStartTime < 500) {
             const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
             window.spaNavigate(new URL(targ, window.location.toString()))
@@ -575,41 +497,31 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   if (enableZoom) {
-    select<HTMLCanvasElement, NodeData>(app.canvas)
-      .call(
-        zoom<HTMLCanvasElement, NodeData>()
-          .extent([
-            [0, 0],
-            [width, height],
-          ])
-          .scaleExtent([0.25, 4])
-          .on("zoom", ({ transform }) => {
-            currentTransform = transform;
-            stage.scale.set(transform.k, transform.k);
-            stage.position.set(transform.x, transform.y);
-  
-            // Set default label visibility
-            nodeRenderData.forEach(rd => rd.label.visible = (rd.simulationData.id === slug || rd.simulationData.id.startsWith("tags/")));
-  
-            // Show the label for the current node
-            const current = nodeRenderData.find(rd => rd.simulationData.id === slug || rd.simulationData.id.startsWith("tags/"));
-            if(current) {
-              current.label.visible = true;
+    select<HTMLCanvasElement, NodeData>(app.canvas).call(
+      zoom<HTMLCanvasElement, NodeData>()
+        .extent([
+          [0, 0],
+          [width, height],
+        ])
+        .scaleExtent([0.25, 4])
+        .on("zoom", ({ transform }) => {
+          currentTransform = transform
+          stage.scale.set(transform.k, transform.k)
+          stage.position.set(transform.x, transform.y)
+
+          // zoom adjusts opacity of labels too
+          const scale = transform.k * opacityScale
+          let scaleOpacity = Math.max((scale - 1) / 3.75, 0)
+          const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label)
+
+          for (const label of labelsContainer.children) {
+            if (!activeNodes.includes(label)) {
+              label.alpha = scaleOpacity
             }
-  
-            // zoom adjusts opacity of labels too
-            const scale = transform.k * opacityScale;
-            let scaleOpacity = Math.max((scale - 1) / 3.75, 0);
-            const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label);
-  
-            for (const label of labelsContainer.children) {
-              if (!activeNodes.includes(label)) {
-                label.alpha = scaleOpacity;
-              }
-            }
-          }),
-      )
-  }  
+          }
+        }),
+    )
+  }
 
   let stopAnimation = false
   function animate(time: number) {

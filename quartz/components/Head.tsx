@@ -25,7 +25,7 @@ export default (() => {
     const url = new URL(`https://${cfg.baseUrl ?? "example.com"}`)
     const path = url.pathname as FullSlug
     const baseDir = fileData.slug === "404" ? path : pathToRoot(fileData.slug!)
-    const iconPath = joinSegments(baseDir, "static/icon2.png")
+    const iconPath = joinSegments(baseDir, "static/icon.png")
 
     // Url of current page
     const socialUrl =
@@ -34,41 +34,11 @@ export default (() => {
     const usesCustomOgImage = ctx.cfg.plugins.emitters.some(
       (e) => e.name === CustomOgImagesEmitterName,
     )
-    const ogImageDefaultPath = `https://${cfg.baseUrl}/static/hello-there-banner.png`
+    const ogImageDefaultPath = `https://${cfg.baseUrl}/static/og-image.png`
 
     return (
       <head>
         <title>{title}</title>
-
-        <script src="https://cdn.jsdelivr.net/npm/abcjs@6.2.2/dist/abcjs-basic-min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/abcjs@6.2.2/dist/abcjs-plugin-min.js" type="text/javascript"></script>
-        <script type="text/javascript">
-        window.ABCJS.plugin.render_before = true;
-        window.ABCJS.plugin.midi_options = &lbraceprogram: 41&rbrace;
-        //window.ABCJS.plugin.debug = true;
-        //responsiveness:
-        window.ABCJS.plugin.render_options = &lbrace
-          responsive: 'resize',
-          scale: 0.8,
-        &rbrace;
-        function handleResize() &lbrace
-          const abcElements = document.querySelectorAll('.abcjs-container');
-          abcElements.forEach(element =&gt; &lbrace
-            const abcNotation = element.getAttribute('data-abc');
-            if (abcNotation) &lbrace
-              ABCJS.renderAbc(element, abcNotation, window.ABCJS.plugin.render_options);
-            &rbrace
-          &rbrace);
-        &rbrace
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('nav', function() &lbrace
-          handleResize();
-        &rbrace);
-        window.addCleanup(() =&gt; &lbrace
-          window.removeEventListener("resize", handleResize)
-        &rbrace)
-      </script>
-
         <meta charSet="utf-8" />
         {cfg.theme.cdnCaching && cfg.theme.fontOrigin === "googleFonts" && (
           <>
@@ -115,7 +85,7 @@ export default (() => {
         <link rel="icon" href={iconPath} />
         <meta name="description" content={description} />
         <meta name="generator" content="Quartz" />
-        <meta name="custom-comment-fanteastick-ez" content="My 'i was here' moment! check out eilleeenz.com" />
+
         {css.map((resource) => CSSResourceToStyleElement(resource, true))}
         {js
           .filter((resource) => resource.loadTime === "beforeDOMReady")

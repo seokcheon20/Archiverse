@@ -171,18 +171,11 @@ Using `docs.example.com` is an example of a subdomain. They're a simple way of c
 4. Go to the Settings tab and then click Domains in the sidebar
 5. Enter your subdomain into the field and press Add
 
-## Netlify
-
-1. Log in to the [Netlify dashboard](https://app.netlify.com/) and click "Add new site".
-2. Select your Git provider and repository containing your Quartz project.
-3. Under "Build command", enter `npx quartz build`.
-4. Under "Publish directory", enter `public`.
-5. Press Deploy. Once it's live, you'll have a `*.netlify.app` URL to view the page.
-6. To add a custom domain, check "Domain management" in the left sidebar, just like with Vercel.
-
 ## GitLab Pages
 
-In your local Quartz, create a new file `.gitlab-ci.yml`.
+You can configure GitLab CI to build and deploy a Quartz 4 project.
+
+In your local Quartz, create a new file `.gitlab-ci.yaml`.
 
 ```yaml title=".gitlab-ci.yml"
 stages:
@@ -203,6 +196,8 @@ build:
     - hash -r
     - npm ci --cache .npm --prefer-offline
   script:
+    - npx prettier --write .
+    - npm run check
     - npx quartz build
   artifacts:
     paths:
@@ -221,7 +216,7 @@ pages:
       - public
 ```
 
-When `.gitlab-ci.yaml` is committed, GitLab will build and deploy the website as a GitLab Page. You can find the url under `Deploy > Pages` in the sidebar.
+When `.gitlab-ci.yaml` is commited, GitLab will build and deploy the website as a GitLab Page. You can find the url under `Deploy` -> `Pages` in the sidebar.
 
 By default, the page is private and only visible when logged in to a GitLab account with access to the repository but can be opened in the settings under `Deploy` -> `Pages`.
 

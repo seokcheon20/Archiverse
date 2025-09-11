@@ -84,7 +84,7 @@ async function processTagPage(
     allFiles,
   }
 
-  const content = await renderPage(cfg, slug, componentData, opts, externalResources)
+  const content = renderPage(cfg, slug, componentData, opts, externalResources)
   return write({
     ctx,
     content,
@@ -130,7 +130,6 @@ export const TagPage: QuartzEmitterPlugin<Partial<TagPageOptions>> = (userOpts) 
         yield processTagPage(ctx, tag, tagDescriptions[tag], allFiles, opts, resources)
       }
     },
-    // @ts-ignore
     async *partialEmit(ctx, content, resources, changeEvents) {
       const allFiles = content.map((c) => c[1].data)
       const cfg = ctx.cfg.configuration

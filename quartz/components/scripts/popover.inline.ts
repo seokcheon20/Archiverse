@@ -5,18 +5,12 @@ import { fetchCanonical } from "./util"
 const p = new DOMParser()
 let activeAnchor: HTMLAnchorElement | null = null
 
-function isFootnoteLink(link: HTMLAnchorElement): boolean {
-  return link.id.startsWith("user-content-fnref-");
-}
-
 async function mouseEnterHandler(
   this: HTMLAnchorElement,
   { clientX, clientY }: { clientX: number; clientY: number },
 ) {
   const link = (activeAnchor = this)
-  if (link.dataset.noPopover === "true" || 
-      link.id.includes("permalink") || 
-      link.classList.contains('broken-link')) {
+  if (link.dataset.noPopover === "true") {
     return
   }
 
@@ -33,7 +27,7 @@ async function mouseEnterHandler(
   function showPopover(popoverElement: HTMLElement) {
     clearActivePopover()
     popoverElement.classList.add("active-popover")
-    setPosition(popoverElement)
+    setPosition(popoverElement as HTMLElement)
 
     if (hash !== "") {
       const targetAnchor = `#popover-internal-${hash.slice(1)}`
@@ -97,30 +91,15 @@ async function mouseEnterHandler(
       const contents = await response.text()
       const html = p.parseFromString(contents, "text/html")
       normalizeRelativeURLs(html, targetUrl)
-      if (isFootnoteLink(link)) {
-        const footnoteId = link.id.replace("user-content-fnref-", "user-content-fn-")
-        const footnoteElement = html.getElementById(footnoteId)
-        if (footnoteElement) {
-          const pElement = footnoteElement.querySelector('p')
-          if (pElement) {
-            popoverInner.appendChild(pElement.cloneNode(true))
-          }
-        }
-      } else {
-        // Check if the link is on the same page
-        const thisUrl = new URL(document.location.href)
-        if (thisUrl.origin === targetUrl.origin && thisUrl.pathname === targetUrl.pathname) {
-          return
-        }
-        const elts = [...html.getElementsByClassName("popover-hint")]
-        if (elts.length === 0) return
-        elts.forEach((elt) => popoverInner.appendChild(elt))
-      }
-      // Prepend all IDs inside popovers to prevent duplicates
+      // prepend all IDs inside popovers to prevent duplicates
       html.querySelectorAll("[id]").forEach((el) => {
         const targetID = `popover-internal-${el.id}`
         el.id = targetID
       })
+      const elts = [...html.getElementsByClassName("popover-hint")]
+      if (elts.length === 0) return
+
+      elts.forEach((elt) => popoverInner.appendChild(elt))
   }
 
   if (!!document.getElementById(popoverId)) {

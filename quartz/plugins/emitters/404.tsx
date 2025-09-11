@@ -51,12 +51,9 @@ export const NotFoundPage: QuartzEmitterPlugin = () => {
         allFiles: [],
       }
 
-      const prepageContent = await renderPage(cfg, slug, componentData, opts, externalResources);
-      const pageContent = prepageContent.replace('<div id="quartz-body">', '<div id="quartz-404-body">');
-      // // hacky - just add in the not-found-page class by doing a replacement
       yield write({
         ctx,
-        content: pageContent,
+        content: renderPage(cfg, slug, componentData, opts, externalResources),
         slug,
         ext: ".html",
       })

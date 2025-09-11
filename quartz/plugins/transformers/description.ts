@@ -2,7 +2,6 @@ import { Root as HTMLRoot } from "hast"
 import { toString } from "hast-util-to-string"
 import { QuartzTransformerPlugin } from "../types"
 import { escapeHTML } from "../../util/escape"
-import { i18n } from "../../i18n"
 
 export interface Options {
   descriptionLength: number
@@ -25,7 +24,7 @@ export const Description: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
   const opts = { ...defaultOptions, ...userOpts }
   return {
     name: "Description",
-    htmlPlugins(ctx) {
+    htmlPlugins() {
       return [
         () => {
           return async (tree: HTMLRoot, file) => {
@@ -47,11 +46,7 @@ export const Description: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
             }
 
             // otherwise, use the text content
-            // const desc = text
-            const desc =
-              (frontMatterDescription ?? file.data.frontmatter?.passphrase)
-                ? i18n(ctx.cfg.configuration.locale).pages.encryptedContent.defaultDescription
-                : text
+            const desc = text
             const sentences = desc.replace(/\s+/g, " ").split(/\.\s/)
             let finalDesc = ""
             let sentenceIdx = 0

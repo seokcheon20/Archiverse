@@ -129,11 +129,6 @@ a {
       fill: var(--dark);
     }
   }
-  
-  &.external { // this whole section was added
-    text-decoration: underline wavy;
-    opacity: 0.9;
-  }
 }
 
 .flex-component {
@@ -180,7 +175,7 @@ a {
     }
 
     & li:has(> input[type="checkbox"]:checked) {
-      // text-decoration: line-through;
+      text-decoration: line-through;
       text-decoration-color: var(--gray);
       color: var(--gray);
     }
@@ -193,94 +188,6 @@ a {
     p > strong {
       color: var(--dark);
     }
-  }
-  // This will give special grid styling to the 404 page, which is just skipping the tablet layout
-  // because it looked weird when there was nothing in the left sidebar
-  & > #quartz-404-body {
-    display: grid;
-    grid-template-columns: #{map.get($desktopGrid, templateColumns)};
-    grid-template-rows: #{map.get($desktopGrid, templateRows)};
-    column-gap: #{map.get($desktopGrid, columnGap)};
-    row-gap: #{map.get($desktopGrid, rowGap)};
-    grid-template-areas: #{map.get($desktopGrid, templateAreas)};
-
-    @media all and ($tablet), all and ($mobile) {
-      grid-template-columns: #{map.get($mobileGrid, templateColumns)};
-      grid-template-rows: #{map.get($mobileGrid, templateRows)};
-      column-gap: #{map.get($mobileGrid, columnGap)};
-      row-gap: #{map.get($mobileGrid, rowGap)};
-      grid-template-areas: #{map.get($mobileGrid, templateAreas)};
-    }
-
-    // Remove or adjust other styles as needed
-    & {
-      padding: 0 1rem;
-      margin-right: 10px;
-    }
-  
-    & .sidebar {
-      gap: 2rem;
-      top: 0;
-      box-sizing: border-box;
-      padding: $topSpacing 2rem 2rem 2rem;
-      display: flex;
-      height: 0vh;
-      position: sticky;
-    }
-  
-    & .sidebar.left {
-      z-index: 1;
-      grid-area: grid-sidebar-left;
-      flex-direction: column;
-      @media all and ($tablet), all and ($mobile) {
-        gap: 0;
-        align-items: center;
-        position: initial;
-        display: flex;
-        // height: unset;
-        flex-direction: row;
-        padding: 0;
-        padding-top: 2rem;
-      }
-    }
-  
-    & .sidebar.right {
-      grid-area: grid-sidebar-right;
-      margin-right: 0;
-      flex-direction: column;
-    }
-  
-    & .page-header,
-    & .page-footer {
-      margin-top: 1rem;
-      @media all and ($tablet), all and ($mobile) {
-        display: none;
-      }
-    }
-  
-    & .page-header {
-      grid-area: grid-header;
-      margin: $topSpacing 0 0 0;
-    }
-  
-    & .center > article {
-      grid-area: grid-center;
-    }
-  
-    & footer {
-      grid-area: grid-footer;
-    }
-  
-    & .center,
-    & footer {
-      max-width: 100%;
-      min-width: 100%;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    & footer {
-      margin-left: 0;
-    }  
   }
 
   & > #quartz-body {
@@ -308,11 +215,9 @@ a {
 
     @media all and not ($desktop) {
       padding: 0 1rem;
-      margin-right: 10px;
     }
     @media all and ($mobile) {
       margin: 0 auto;
-      margin-right: 10px;
     }
 
     & .sidebar {
@@ -321,7 +226,7 @@ a {
       box-sizing: border-box;
       padding: $topSpacing 2rem 2rem 2rem;
       display: flex;
-      height: 90vh;
+      height: 100vh;
       position: sticky;
     }
 
@@ -338,10 +243,6 @@ a {
         flex-direction: row;
         padding: 0;
         padding-top: 2rem;
-      }
-
-      @media all and not ($desktop) {
-        margin-right: 10px;
       }
     }
 
@@ -416,7 +317,7 @@ a {
 }
 
 input[type="checkbox"] {
-  transform: translateY(5px);
+  transform: translateY(2px);
   color: var(--secondary);
   border: 1px solid var(--lightgray);
   border-radius: 3px;
@@ -552,7 +453,6 @@ pre {
   overflow-x: auto;
   border: 1px solid var(--lightgray);
   position: relative;
-  line-height: 1.3em;
 
   &:has(> code.mermaid) {
     border: none;
@@ -723,15 +623,9 @@ ol.overflow {
   overflow-y: hidden;
 }
 
-.external-embed.youtube {
-  aspect-ratio: 16 / 9;
-  height: 100%;
-  width: 100%;
-  border-radius: 5px;
-}
-
+.external-embed.youtube,
 iframe.pdf {
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 9;
   height: 100%;
   width: 100%;
   border-radius: 5px;

@@ -5,11 +5,8 @@ import { QuartzEmitterPlugin } from "../types"
 import spaRouterScript from "../../components/scripts/spa.inline"
 // @ts-ignore
 import popoverScript from "../../components/scripts/popover.inline"
-// @ts-ignore
-import decryptScript from "../../components/scripts/_decrypt.inline"
 import styles from "../../styles/custom.scss"
 import popoverStyle from "../../components/styles/popover.scss"
-import passProtectedStyle from "../../components/styles/_passwordProtected.scss"
 import { BuildCtx } from "../../util/ctx"
 import { QuartzComponent } from "../../components/types"
 import {
@@ -88,13 +85,6 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
     componentResources.css.push(popoverStyle)
   }
 
-  // password protected
-  if (cfg.passProtected?.enabled) {
-    componentResources.afterDOMLoaded.push(decryptScript)
-    componentResources.css.push(passProtectedStyle)
-  }
-
-
   if (cfg.analytics?.provider === "google") {
     const tagId = cfg.analytics.tagId
     componentResources.afterDOMLoaded.push(`
@@ -145,15 +135,27 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
     `)
   } else if (cfg.analytics?.provider === "goatcounter") {
     componentResources.afterDOMLoaded.push(`
-      document.addEventListener("nav", () => {
-      const goatcounterScript = document.createElement("script")
-      goatcounterScript.src = "${cfg.analytics.scriptSrc ?? "https://gc.zgo.at/count.js"}"
-      goatcounterScript.async = true
-      goatcounterScript.setAttribute("data-goatcounter",
-        "https://${cfg.analytics.websiteId}.${cfg.analytics.host ?? "goatcounter.com"}/count")
-      document.head.appendChild(goatcounterScript)
-    })
-  `)
+      const goatcounterScriptPre = document.createElement('script');
+      goatcounterScriptPre.textContent = \`
+        window.goatcounter = { no_onload: true };
+      \`;
+      document.head.appendChild(goatcounterScriptPre);
+
+      const endpoint = "https://${cfg.analytics.websiteId}.${cfg.analytics.host ?? "goatcounter.com"}/count";
+      const goatcounterScript = document.createElement('script');
+      goatcounterScript.src = "${cfg.analytics.scriptSrc ?? "https://gc.zgo.at/count.js"}";
+      goatcounterScript.defer = true;
+      goatcounterScript.setAttribute('data-goatcounter', endpoint);
+      goatcounterScript.onload = () => {
+        window.goatcounter.endpoint = endpoint;
+        goatcounter.count({ path: location.pathname });
+        document.addEventListener('nav', () => {
+          goatcounter.count({ path: location.pathname });
+        });
+      };
+
+      document.head.appendChild(goatcounterScript);
+    `)
   } else if (cfg.analytics?.provider === "posthog") {
     componentResources.afterDOMLoaded.push(`
       const posthogScript = document.createElement("script");

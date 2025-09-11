@@ -6,7 +6,7 @@ tags:
   - main/index
 date: 2025-09-11
 ---
-![[og-image1.png]]
+![[og-image.png]]
 ```poetry
 Welcome to Archiverse!
 A life record, a universe beyond the archives.

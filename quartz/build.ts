@@ -19,7 +19,6 @@ import { options } from "./util/sourcemap"
 import { Mutex } from "async-mutex"
 import { getStaticResourcesFromPlugins } from "./plugins"
 import { randomIdNonSecure } from "./util/random"
-import { encryptPages } from "./plugins/transformers/_password"
 import { ChangeEvent } from "./plugins/types"
 import { minimatch } from "minimatch"
 
@@ -86,7 +85,6 @@ async function buildQuartz(argv: Argv, mut: Mutex, clientRefresh: () => void) {
   const filteredContent = filterContent(ctx, parsedFiles)
 
   await emitContent(ctx, filteredContent)
-  await encryptPages()
   console.log(
     styleText("green", `Done processing ${markdownPaths.length} files in ${perf.timeSince()}`),
   )

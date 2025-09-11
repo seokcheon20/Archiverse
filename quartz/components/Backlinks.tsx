@@ -6,13 +6,11 @@ import { classNames } from "../util/lang"
 import OverflowListFactory from "./OverflowList"
 
 interface BacklinksOptions {
-  hideWhenEmpty: boolean,
-  excludeTags: string[]
+  hideWhenEmpty: boolean
 }
 
 const defaultOptions: BacklinksOptions = {
   hideWhenEmpty: true,
-  excludeTags: []
 }
 
 export default ((opts?: Partial<BacklinksOptions>) => {
@@ -26,15 +24,7 @@ export default ((opts?: Partial<BacklinksOptions>) => {
     cfg,
   }: QuartzComponentProps) => {
     const slug = simplifySlug(fileData.slug!)
-    // const backlinkFiles = allFiles.filter((file) => file.links?.includes(slug))
-    const _excludeTags = options.excludeTags
-    const unfilteredBacklinkFiles = allFiles.filter((file) => file.links?.includes(slug))
-    const backlinkFiles = unfilteredBacklinkFiles.filter((file) => {
-      const hasExcludeTag = _excludeTags.some((tag: string) => // todo: check if the SOME filter works
-        file.frontmatter?.tags?.includes(tag)
-      );
-      return !hasExcludeTag;
-    });
+    const backlinkFiles = allFiles.filter((file) => file.links?.includes(slug))
     if (options.hideWhenEmpty && backlinkFiles.length == 0) {
       return null
     }

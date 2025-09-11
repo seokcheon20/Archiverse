@@ -1,25 +1,31 @@
-import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
+import { QuartzComponentConstructor, QuartzComponentProps } from "./types"
+import { OptionType } from "../plugins/types"
 import style from "./styles/footer.scss"
 import { version } from "../../package.json"
 import { i18n } from "../i18n"
-// @ts-ignore
-import script from "./scripts/_randomPage.inline"
 
-interface Options {
+interface Optionss {
   links: Record<string, string>
 }
 
-export default ((opts?: Options) => {
-  const Footer: QuartzComponent = ({ displayClass, cfg }: QuartzComponentProps) => {
+export default ((opts?: Optionss) => {
+  function Footer({ displayClass }: QuartzComponentProps) {
     const year = new Date().getFullYear()
     const links = opts?.links ?? []
     return (
-      // Added a class to the footer so that I can query it for pageup/down
-      <footer class={`${displayClass ?? ""} footer`}>
-        <p>
-          {i18n(cfg.locale).components.footer.createdWith}{" "}
-          <a href="https://quartz.jzhao.xyz/">Quartz v{version}</a> © {year}
+      <footer class={`${displayClass ?? ""}`}>
+        <p style="margin-bottom:4px;line-height:1.5em;font-weight:bold;font-size:2em;">
+          Share your thoughts with{" "}
+          <a class="internal" href="/Projects/Obsidian/quartz-comments">
+            Remark42
+          </a>
         </p>
+        <div id="remark42"></div>
+        <hr />
+        <p>
+          © be-far {year}. Powered by <a href="https://quartz.jzhao.xyz/">Quartz</a>.
+        </p>
+        <p>not a substitute for legal advice 🤟</p>
         <ul>
           {Object.entries(links).map(([text, link]) => (
             <li>
@@ -27,24 +33,10 @@ export default ((opts?: Options) => {
             </li>
           ))}
         </ul>
-        <p></p> 
-        <ul>
-          <li>
-            <a href="#">
-            Scroll to top ↑
-            </a> 
-          </li>
-          <li>
-            <a id="random-page-button">
-            Random Page 🎲
-            </a>
-          </li>
-        </ul>
       </footer>
     )
   }
 
   Footer.css = style
-  Footer.afterDOMLoaded = script
   return Footer
 }) satisfies QuartzComponentConstructor

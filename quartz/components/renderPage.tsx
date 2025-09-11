@@ -2,9 +2,7 @@ import { render } from "preact-render-to-string"
 import { QuartzComponent, QuartzComponentProps } from "./types"
 import HeaderConstructor from "./Header"
 import BodyConstructor from "./Body"
-import EncryptedContent from "./pages/_EncryptedContent"
 import { JSResourceToScriptElement, StaticResources } from "../util/resources"
-import { getEncryptedPayload } from "../util/_encrypt"
 import { FullSlug, RelativeURL, joinSegments, normalizeHastElement } from "../util/path"
 import { clone } from "../util/clone"
 import { visit } from "unist-util-visit"
@@ -188,13 +186,13 @@ function renderTranscludes(
   })
 }
 
-export async function renderPage(
+export function renderPage(
   cfg: GlobalConfiguration,
   slug: FullSlug,
   componentData: QuartzComponentProps,
   components: RenderComponents,
   pageResources: StaticResources,
-): Promise<string> {
+): string {
   // make a deep copy of the tree so we don't remove the transclusion references
   // for the file cached in contentMap in build.ts
   const root = clone(componentData.tree) as Root
@@ -215,7 +213,6 @@ export async function renderPage(
   } = components
   const Header = HeaderConstructor()
   const Body = BodyConstructor()
-  const Encrypted = EncryptedContent()
 
   const LeftComponent = (
     <div class="left sidebar">
@@ -233,20 +230,32 @@ export async function renderPage(
     </div>
   )
 
-  let content = <Content {...componentData} />
-  if (cfg.passProtected?.enabled && componentData.fileData.frontmatter?.passphrase) {
-    componentData.encryptedContent = await getEncryptedPayload(
-      render(content),
-      componentData.fileData.frontmatter.passphrase.toString(),
-      cfg.passProtected?.iteration,
-    )
-    content = <Encrypted {...componentData} />
-  }
-
   const lang = componentData.fileData.frontmatter?.lang ?? cfg.locale?.split("-")[0] ?? "en"
   const doc = (
     <html lang={lang}>
       <Head {...componentData} />
+      <head>
+        {slug === "index" ? (
+          <link
+            rel="alternate"
+            type="application/rss+xml"
+            href="/index.xml"
+            title="Newest in Projects & Privacy"
+          />
+        ) : (
+          <></>
+        )}
+        {slug === "index" ? (
+          <link
+            rel="alternate"
+            type="application/rss+xml"
+            href="/Updates.xml"
+            title="Projects & Privacy Monthly"
+          />
+        ) : (
+          <></>
+        )}
+      </head>
       <body data-slug={slug}>
         <div id="quartz-root" class="page">
           <Body {...componentData}>
@@ -259,14 +268,12 @@ export async function renderPage(
                   ))}
                 </Header>
                 <div class="popover-hint">
-                  {beforeBody.map((BodyComponent) => (
-                    <BodyComponent {...componentData} />
-                  ))}
+                  {slug !== "index" &&
+                    beforeBody.map((BodyComponent) => <BodyComponent {...componentData} />)}
                 </div>
               </div>
-              {/* <Content {...componentData} /> got replaced bc of the encrypted stuff */}
-              {content}
-              {/* <hr /> */}
+              <Content {...componentData} />
+              <hr />
               <div class="page-footer">
                 {afterBody.map((BodyComponent) => (
                   <BodyComponent {...componentData} />

@@ -1,15 +1,14 @@
 import { Root } from "hast"
 import { GlobalConfiguration } from "../../cfg"
-import { getDate } from "../../components/Date"
+import { getDate, _getDateCustom } from "../../components/Date"
 import { escapeHTML } from "../../util/escape"
 import { FilePath, FullSlug, SimpleSlug, joinSegments, simplifySlug } from "../../util/path"
 import { QuartzEmitterPlugin } from "../types"
 import { toHtml } from "hast-util-to-html"
 import { write } from "./helpers"
 import { i18n } from "../../i18n"
-import chalk from "chalk"
 
-export type ContentIndex = Map<FullSlug, ContentDetails>
+export type ContentIndexMap = Map<FullSlug, ContentDetails>
 export type ContentDetails = {
   slug: FullSlug
   filePath: FilePath
@@ -25,26 +24,22 @@ export type ContentDetails = {
 interface Options {
   enableSiteMap: boolean
   enableRSS: boolean
-  bypassIndexCheck: boolean
   rssLimit?: number
   rssFullHtml: boolean
   rssSlug: string
   includeEmptyFiles: boolean
-  feedDirectories: string[]
 }
 
 const defaultOptions: Options = {
-  bypassIndexCheck: false,
   enableSiteMap: true,
   enableRSS: true,
   rssLimit: 10,
   rssFullHtml: false,
   rssSlug: "index",
   includeEmptyFiles: true,
-  feedDirectories: ["index"],
 }
 
-function generateSiteMap(cfg: GlobalConfiguration, idx: ContentIndex): string {
+function generateSiteMap(cfg: GlobalConfiguration, idx: ContentIndexMap): string {
   const base = cfg.baseUrl ?? ""
   const createURLEntry = (slug: SimpleSlug, content: ContentDetails): string => `<url>
     <loc>https://${joinSegments(base, encodeURI(slug))}</loc>
@@ -56,14 +51,14 @@ function generateSiteMap(cfg: GlobalConfiguration, idx: ContentIndex): string {
   return `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls}</urlset>`
 }
 
-function generateRSSFeed(cfg: GlobalConfiguration, idx: ContentIndex, limit?: number): string {
+function generateRSSFeed(cfg: GlobalConfiguration, idx: ContentIndexMap, limit?: number): string {
   const base = cfg.baseUrl ?? ""
 
   const createURLEntry = (slug: SimpleSlug, content: ContentDetails): string => `<item>
     <title>${escapeHTML(content.title)}</title>
     <link>https://${joinSegments(base, encodeURI(slug))}</link>
     <guid>https://${joinSegments(base, encodeURI(slug))}</guid>
-    <description>${content.richContent ?? content.description + " Read more at &lt;a href=&quot;" + base + "/" + slug + "&quot;&gt;be-far.com&lt;/a&gt;"}</description>
+    <description>${content.richContent ?? content.description}</description>
     <pubDate>${content.date?.toUTCString()}</pubDate>
   </item>`
 
@@ -87,7 +82,50 @@ function generateRSSFeed(cfg: GlobalConfiguration, idx: ContentIndex, limit?: nu
 <rss version="2.0">
     <channel>
       <title>${escapeHTML(cfg.pageTitle)}</title>
-      <link>${base}</link>
+      <link>https://${base}</link>
+      <description>${!!limit ? i18n(cfg.locale).pages.rss.lastFewNotes({ count: limit }) : i18n(cfg.locale).pages.rss.recentNotes} on ${escapeHTML(
+        cfg.pageTitle,
+      )}</description>
+      <generator>Quartz -- quartz.jzhao.xyz</generator>
+      ${items}
+    </channel>
+  </rss>`
+}
+
+function generateCreatedRSSFeed(cfg: GlobalConfiguration, idx: ContentIndexMap, limit?: number): string {
+  const base = cfg.baseUrl ?? ""
+
+  const createURLEntry = (slug: SimpleSlug, content: ContentDetails): string => `<item>
+    <title>${escapeHTML(content.title)}</title>
+    <link>https://${joinSegments(base, encodeURI(slug))}</link>
+    <guid>https://${joinSegments(base, encodeURI(slug))}</guid>
+    <description>${content.richContent ?? content.description}</description>
+    <pubDate>${content.date?.toUTCString()}</pubDate>
+  </item>`
+
+  const items = Array.from(idx)
+    .sort(([_, f1], [__, f2]) => {
+      const date1 = _getDateCustom(cfg, f1, 'created')
+      const date2 = _getDateCustom(cfg, f2, 'created')
+      if (date1 && date2) {
+        return date2.getTime() - date1.getTime()
+      } else if (date1 && !date2) {
+        return -1
+      } else if (!date1 && date2) {
+        return 1
+      }
+
+      return f1.title.localeCompare(f2.title)
+    })
+    .map(([slug, content]) => createURLEntry(simplifySlug(slug), content))
+    .slice(0, limit ?? idx.size)
+    .join("")
+
+  return `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+      <title>${escapeHTML(cfg.pageTitle)}</title>
+      <link>https://${base}</link>
       <description>${!!limit ? i18n(cfg.locale).pages.rss.lastFewNotes({ count: limit }) : i18n(cfg.locale).pages.rss.recentNotes} on ${escapeHTML(
         cfg.pageTitle,
       )}</description>
@@ -101,88 +139,63 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
   opts = { ...defaultOptions, ...opts }
   return {
     name: "ContentIndex",
-    async *emit(ctx, content, _resources) {
-      // If we're missing an index file, don't bother with sitemap/RSS gen
-      if (
-        !(
-          opts?.bypassIndexCheck ||
-          content.map((c) => c[1].data.slug!).includes("index" as FullSlug)
-        )
-      ) {
-        console.warn(
-          chalk.yellow(`Warning: contentIndex: 
-  content/ folder is missing an index.md. RSS feeds and sitemap will not be generated.
-  If you still wish to generate these files, add:
-    bypassIndexCheck: true,
-  to your configuration for Plugin.ContentIndex({...}) in quartz.config.ts.
-  Don't do this unless you know what you're doing!`),
-        )
-        return []
-      }
-
+    async *emit(ctx, content) {
       const cfg = ctx.cfg.configuration
-      const emitted: Promise<FilePath>[] = []
-      const feedIndices: Map<string, ContentIndex> = new Map()
-
-      for (const feed of opts?.feedDirectories!) {
-        const linkIndex: ContentIndex = new Map()
-        for (const [tree, file] of content) {
-          const slug = file.data.slug!
-
-          const date = getDate(ctx.cfg.configuration, file.data) ?? new Date()
-          if (
-            (opts?.includeEmptyFiles || (file.data.text && file.data.text !== "")) &&
-            (slug.startsWith(feed) || feed == "index")
-          ) {
-            linkIndex.set(slug, {
-              slug,
-              filePath: file.data.relativePath!,
-              title: file.data.frontmatter?.title!,
-              links: file.data.links ?? [],
-              tags: file.data.frontmatter?.tags ?? [],
-              content: file.data.text ?? "",
-              richContent: opts?.rssFullHtml
+      const linkIndex: ContentIndexMap = new Map()
+      for (const [tree, file] of content) {
+        // Credits felix nie on discord: mod: skip files with specific tag while building the search index
+        if (file.data.frontmatter?.tags?.includes("search-exclude")) {
+          continue
+        }
+        
+        if (file.data.isProtected) file.data.text = "";
+        const slug = file.data.slug!
+        const date = getDate(ctx.cfg.configuration, file.data) ?? new Date()
+        if (opts?.includeEmptyFiles || (file.data.text && file.data.text !== "")) {
+          linkIndex.set(slug, {
+            slug,
+            filePath: file.data.relativePath!,
+            title: file.data.frontmatter?.title!,
+            links: file.data.links ?? [],
+            tags: file.data.frontmatter?.tags ?? [],
+            content: file.data.text && !file.data.frontmatter?.passphrase ? file.data.text : "",
+            richContent:
+              opts?.rssFullHtml && !file.data.frontmatter?.passphrase
                 ? escapeHTML(toHtml(tree as Root, { allowDangerousHtml: true }))
                 : undefined,
-              date: date,
-              description: file.data.description ?? "",
-            })
-          }
+            date: date,
+            description: file.data.description ?? "",
+          })
         }
-        feedIndices.set(feed, linkIndex)
       }
 
-      const siteFeed = feedIndices.get("index")!
       if (opts?.enableSiteMap) {
-        emitted.push(
-          write({
-            ctx,
-            // bfahrenfort: "index" is guaranteed non-null
-            // see directories instantiation and feedIndices.set iterating over directories
-            content: generateSiteMap(cfg, siteFeed),
-            slug: "sitemap" as FullSlug,
-            ext: ".xml",
-          }),
-        )
+        yield write({
+          ctx,
+          content: generateSiteMap(cfg, linkIndex),
+          slug: "sitemap" as FullSlug,
+          ext: ".xml",
+        })
       }
 
       if (opts?.enableRSS) {
-        opts.feedDirectories!.map((feed) => {
-          emitted.push(
-            write({
-              ctx,
-              // bfahrenfort: we just generated a feedIndices entry for every directories entry, guaranteed non-null
-              content: generateRSSFeed(cfg, feedIndices.get(feed)!, opts?.rssLimit),
-              slug: feed as FullSlug,
-              ext: ".xml",
-            }),
-          )
+        yield write({
+          ctx,
+          content: generateRSSFeed(cfg, linkIndex, opts.rssLimit),
+          slug: (opts?.rssSlug ?? "index") as FullSlug,
+          ext: ".xml",
+        })
+        yield write({
+          ctx,
+          content: generateCreatedRSSFeed(cfg, linkIndex, opts.rssLimit),
+          slug: "index-created" as FullSlug,
+          ext: ".xml",
         })
       }
 
       const fp = joinSegments("static", "contentIndex") as FullSlug
       const simplifiedIndex = Object.fromEntries(
-        Array.from(feedIndices.get("index")!).map(([slug, content]) => {
+        Array.from(linkIndex).map(([slug, content]) => {
           // remove description and from content index as nothing downstream
           // actually uses it. we only keep it in the index as we need it
           // for the RSS feed
@@ -192,16 +205,32 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
         }),
       )
 
-      emitted.push(
-        write({
-          ctx,
-          content: JSON.stringify(simplifiedIndex),
-          slug: fp,
-          ext: ".json",
-        }),
-      )
-
-      return await Promise.all(emitted)
+      yield write({
+        ctx,
+        content: JSON.stringify(simplifiedIndex),
+        slug: fp,
+        ext: ".json",
+      })
+    },
+    externalResources: (ctx) => {
+      if (opts?.enableRSS) {
+        return {
+          additionalHead: [
+            <link
+              rel="alternate"
+              type="application/rss+xml"
+              title="RSS Feed"
+              href={`https://${ctx.cfg.configuration.baseUrl}/index.xml`}
+            />,
+            <link
+              rel="alternate"
+              type="application/rss+xml"
+              title="RSS Feed by Creation Time"
+              href={`https://${ctx.cfg.configuration.baseUrl}/index-created.xml`}
+            />,
+          ],
+        }
+      }
     },
   }
 }

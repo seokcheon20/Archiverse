@@ -81,6 +81,14 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
             if (tags) data.tags = [...new Set(tags.map((tag: string) => slugTag(tag)))]
 
             const aliases = coerceToArray(coalesceAliases(data, ["aliases", "alias"]))
+            // const permalink = data.permalink
+
+            // if (aliases || permalink) {
+            //   if (aliases) {
+            //     data.aliases = aliases // frontmatter
+            //   }
+            //   const slugs = (file.data.aliases = getAliasSlugs(aliases ?? [], argv, file))
+            //   allSlugs.push(...slugs)
             if (aliases) {
               data.aliases = aliases // frontmatter
               file.data.aliases = getAliasSlugs(aliases)
@@ -100,17 +108,18 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
 
             const socialImage = coalesceAliases(data, ["socialImage", "image", "cover"])
 
-            const created = coalesceAliases(data, ["created", "date"])
-            if (created) {
-              data.created = created
-              data.modified ||= created // if modified is not set, use created
-            }
-
+            const created = coalesceAliases(data, ["created", "date", "date created"])
+            // if (created) {
+            //   data.created = created
+            //   data.modified ||= created // if modified is not set, use created
+            // }
+            if (created) data.created = created
             const modified = coalesceAliases(data, [
               "modified",
               "lastmod",
               "updated",
               "last-modified",
+              "date modified",
             ])
             if (modified) data.modified = modified
             const published = coalesceAliases(data, ["published", "publishDate", "date"])
@@ -149,8 +158,11 @@ declare module "vfile" {
         lang: string
         enableToc: string
         cssclasses: string[]
+        permalink: string
+        subtitle: string
         socialImage: string
         comments: boolean | string
+        slurped: string
       }>
   }
 }

@@ -11,9 +11,45 @@ import * as Plugin from "./quartz/plugins"
  * See https://quartz.jzhao.xyz/configuration for more information.
  */
 
+const possiblePageTitles = [
+  "🪴Archiverse_(｡•ㅅ•｡)~✧",
+  "🪴Archiverse_૭( ᵕ•̀ᵕ•́૭)",
+  "🪴Archiverse_(૭ •́ ᵕ•̀ )૭",
+  "🪴Archiverse_(๑>؂·̀๑)",
+  "🪴Archiverse_৻(•̀ᗜ•́৻)",
+  "🪴Archiverse_٩(•̤̀ᵕ•̤́๑)",
+  "🪴Archiverse_(｡•́︿•̀｡)",
+  "🪴Archiverse_ᕙ( •̀ ᗜ •́ )ᕗ",
+  "🪴Archiverse_(๑•́ ₃ •̀๑)",
+  "🪴Archiverse_(づ ̄ ³ ̄)づ",
+  "🪴Archiverse_( ˵ •̀ ᴗ •́˵)",
+  "🪴Archiverse_(๑•́o•̀๑)",
+  "🪴Archiverse_٩(๑❛ᴗ❛๑)6",
+  "🪴Archiverse_(╥﹏╥)",
+  "🪴Archiverse_( ˘ ³˘(◡‿◡˶)",
+  "🪴Archiverse_٩(๑˘•ω•˘๑)٩",
+  "🪴Archiverse_૮ ˶ᵔ ᵕ ᵔ˶ ა",
+  "🪴Archiverse_(˶˃ ᵕ ˂˶).ᐟ",
+  "🪴Archiverse_ദ്ദി •⩊• )",
+  "🪴Archiverse_꒰ᐢ. .ᐢ꒱₊˚⊹",
+  "🪴Archiverse_Ꮺ ָ࣪ ۰ ͙⊹",
+  "🪴Archiverse_˚ʚ♡ɞ˚",
+  "🪴Archiverse_𓂃 ࣪⋆💿˚ ༘",
+  "🪴Archiverse_⸜(｡˃ ᵕ ˂ )⸝♡",
+  "🪴Archiverse_`⎚⩊⎚´ -✧",
+  "🪴Archiverse_(˶˃ ᵕ ˂˶)~✧",
+  "🪴Archiverse_(๑>⋆<๑)~✧",
+  "🪴Archiverse_(˵•̀ ᴗ •́˵)~✧",
+  "🪴Archiverse_(૮ ᵕ•̀ )૮~✧",
+];
+function getRandomPageTitle(): string {
+  return possiblePageTitles[Math.floor(Math.random() * possiblePageTitles.length)];
+}
+
 const config: QuartzConfig = {
   configuration: {
-    pageTitle:"🪴Archiverse : 삶은 기록 너머 우주",
+    pageTitle: getRandomPageTitle(),
+    pageTitleSuffix: " : 삶은 기록 너머 우주",
     enableSPA: true,
     enablePopovers: true,
     analytics: {
@@ -32,14 +68,35 @@ const config: QuartzConfig = {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
-        header: {
-          name: "Gowun Batang",
-          weights: [400],
-        },
-           body: "Gowun Batang",
+        header: "Gowun Batang",
+        // body: "Source Sans Pro", << original
+        body: "Gowun Batang",
         code: "JetBrains Mono",
       },
       colors: {
+        // lightMode: {
+        //   light: "#faf8f8",
+        //   lightgray: "#e5e5e5",
+        //   gray: "#b8b8b8",
+        //   darkgray: "#4e4e4e",
+        //   dark: "#2b2b2b",
+        //   secondary: "#284b63",
+        //   tertiary: "#84a59d",
+        //   highlight: "rgba(143, 159, 169, 0.15)",
+        // },
+      //   'desert-storm': {
+      //     '50': '#fafbf9',
+      //     '100': '#eff2ec',
+      //     '200': '#dde2d5',
+      //     '300': '#bfc9b0',
+      //     '400': '#9bab85',
+      //     '500': '#809166',
+      //     '600': '#677851',
+      //     '700': '#546242',
+      //     '800': '#475339',
+      //     '900': '#3e4733',
+      //     '950': '#292f22',
+      // },
         lightMode: {
           light: "#fffdfa",
           lightgray: "#d1caba",
@@ -51,6 +108,17 @@ const config: QuartzConfig = {
           highlight: "rgba(255, 178, 42, 0.15)",
           textHighlight: "#fff23688",
         },
+        // darkMode: {
+        //   light: "#161618",
+        //   lightgray: "#393639",
+        //   gray: "#646464",
+        //   darkgray: "#d4d4d4",
+        //   dark: "#ebebec",
+        //   secondary: "#7b97aa",
+        //   tertiary: "#84a59d",
+        //   highlight: "rgba(143, 159, 169, 0.15)",
+        //   textHighlight: "#b3aa0288",
+        // },
         darkMode: {
           light: "#0c0f14",
           lightgray: "#1D232D",
@@ -64,7 +132,7 @@ const config: QuartzConfig = {
         },
       },
     },
-  },
+  },   
   plugins: {
     transformers: [
       Plugin.Staticrypt(),

@@ -10,7 +10,9 @@ import PageTitle from "./PageTitle"
 import ContentMeta from "./ContentMeta"
 import Spacer from "./Spacer"
 import TableOfContents from "./TableOfContents"
+import TableOfContents2 from "./_TableOfContents2"
 import Explorer from "./Explorer"
+import ExplorerOld from "./_ExplorerOld"
 import TagList from "./TagList"
 import Graph from "./Graph"
 import Backlinks from "./Backlinks"
@@ -20,8 +22,22 @@ import DesktopOnly from "./DesktopOnly"
 import MobileOnly from "./MobileOnly"
 import RecentNotes from "./RecentNotes"
 import Breadcrumbs from "./Breadcrumbs"
+import GithubSource from "./_GithubSource"
+import OnlyFor from "./_OnlyFor"
+import NotFor from "./_NotFor"
+import ScrollToTop from "./_ScrollToTop"
+import ComponentGroup from "./_ComponentGroup"
+import RandomPageButton from "./_RandomPageButton"
+import Column from "./_Column"
+import Row from "./_Row"
 import Comments from "./Comments"
+import Map from "./_Map"
+import MiniButton from "./_MiniButton"
+import FloatingButtons from "./_FloatingButtons"
+import HiddenGlobalGraph from "./_hiddenGlobalGraph"
 import Flex from "./Flex"
+import OverlayExplorer from "./_OverlayExplorer"
+import Properties from "./_Properties"
 import ConditionalRender from "./ConditionalRender"
 
 export {
@@ -36,6 +52,7 @@ export {
   ContentMeta,
   Spacer,
   TableOfContents,
+  TableOfContents2,
   Explorer,
   TagList,
   Graph,
@@ -47,7 +64,22 @@ export {
   RecentNotes,
   NotFound,
   Breadcrumbs,
+  GithubSource,
+  OnlyFor,
+  NotFor,
+  ScrollToTop,
+  ComponentGroup,
+  RandomPageButton,
+  Column,
+  Row,
   Comments,
+  Map,
+  MiniButton,
+  FloatingButtons,
+  HiddenGlobalGraph,
   Flex,
+  ExplorerOld,
+  OverlayExplorer, 
+  Properties,
   ConditionalRender,
 }

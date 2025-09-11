@@ -7,10 +7,13 @@ import { QuartzPluginData } from "./quartz/plugins/vfile"
 import { FileTrieNode } from './quartz/util/fileTrie';
 import { FileNode } from "./quartz/components/_ExplorerNodeOld";
 
+// Secrets
+const myRepoID = process.env.GISCUS_REPO_ID;
+const myCategoryID = process.env.GISCUS_CATEGORY_ID;
+
 // Constants for config that are reused a lot
 const homepageTitle = "🪴Archiverse : 삶은 기록 너머 우주"
 const modifiedListTitle = "All-files-chronologically-modified"
-
 const mapTitle = "Map"
 const tagsToRemove = ["graph-exclude", "explorer-exclude", "backlinks-exclude", "recents-exclude", "search-exclude", "listing-exclude"]
 const graphConfig = {
@@ -72,6 +75,23 @@ const oldexplorerConfig = {
       }
   }
 }}
+const giscusConfig = {
+  provider: 'giscus',
+  options: {
+    // from data-repo
+    repo: 'fanteastick/quartz-test',
+    // from data-repo-id
+    repoId: myRepoID,
+    // from data-category
+    category: 'Announcements',
+    // from data-category-id
+    categoryId: myCategoryID,
+    mapping: "specific",
+    strict: false,
+    reactionsEnabled: false,
+    inputPosition: "top",
+    term: "Guestbook"
+}}
 const githubSourceConfig = { 
   repoLink: "https://github.com/seokcheon20/Archiverse"
 }
@@ -82,12 +102,37 @@ export const sharedPageComponents: SharedLayout = {
   header: [],
   afterBody: [
   Component.OnlyFor(
+    { titles: [homepageTitle] },
+    Component.RecentNotes(recentNotesConfig)
+  ), 
+  Component.OnlyFor(
     { titles: [mapTitle]},
     Component.RecentNotes({...recentNotesConfig, limit: 8})
   ),
+  Component.Comments({
+    provider: 'giscus',
+    options: {
+      // from data-repo
+      repo: 'fanteastick/quartz-test',
+      // from data-repo-id
+      repoId: 'R_kgDOMVIwGw',
+      // from data-category
+      category: 'Announcements',
+      // from data-category-id
+      categoryId: 'DIC_kwDOMVIwG84Cguqi',
+      mapping: "specific",
+      strict: false,
+      reactionsEnabled: false,
+      inputPosition: "top",
+      term: "Guestbook"
+  }})
 ],
   footer: Component.Footer({
-    links: {}}),
+    links: {
+      Main: "https://www.eilleeenz.com/",
+      GitHub: "https://github.com/fanteastick/quartz-test",
+    },
+  }),
 }
 
 // components for pages that display a single page (e.g. a single note) 
@@ -118,38 +163,6 @@ export const defaultContentPageLayout: PageLayout = {
       Component.Search(),
     ]),
     // Component.DesktopOnly(Component.OnlyFor({titles: [homepageTitle, mapTitle]}, Component.ExplorerOld(explorerConfig))),
-    Component.Explorer({
-      sortFn: (a, b) => {
-        const emojis =
-          /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g
-        const a_name = a.data?.title.replace(emojis, "").trim()
-        const a_dname = a.displayName.replace(emojis, "").trim()
-        const b_name = b.data?.title.replace(emojis, "").trim()
-        const b_dname = b.displayName.replace(emojis, "").trim()
-        // Sort order: folders first, then files. Sort folders and files alphabetically
-        if (/^.*Home$/.test(a_dname)) {
-          return -1
-        }
-        if (/^.*Home$/.test(b_dname)) {
-          return 1
-        }
-        if ((!a.isFolder && !b.isFolder) || (a.isFolder && b.isFolder)) {
-          // numeric: true: Whether numeric collation should be used, such that "1" < "2" < "10"
-          // sensitivity: "base": Only strings that differ in base letters compare as unequal. Examples: a ≠ b, a = á, a = A
-          return a_dname.localeCompare(b_dname, undefined, {
-            numeric: true,
-            sensitivity: "base",
-          })
-        }
-
-        if (!a.isFolder && b.isFolder) {
-          return 1
-        } else {
-          return -1
-        }
-      },
-    }),
-    //Component.TableOfContents(),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.DesktopOnly(Component.OnlyFor({titles: [homepageTitle, mapTitle]}, Component.Explorer(explorerConfig))),
     Component.FloatingButtons({position: 'right'}),

@@ -68,7 +68,7 @@ export default {
     error: {
       title: "Not Found",
       notFound: "Either this page is private or doesn't exist.",
-      home: "Return to Homepage",
+      home: "🏡 Return to Homepage",
     },
     folderContent: {
       folder: "Folder",
@@ -76,12 +76,25 @@ export default {
         count === 1 ? "1 item under this folder." : `${count} items under this folder.`,
     },
     tagContent: {
-      tag: "Tag",
-      tagIndex: "Tag Index",
+      // tag: "Tag",
+      tag: "🔖",
+      // tagIndex: "Tag Index",
+      tagIndex: "🔖 All Tags",
       itemsUnderTag: ({ count }) =>
         count === 1 ? "1 item with this tag." : `${count} items with this tag.`,
       showingFirst: ({ count }) => `Showing first ${count} tags.`,
       totalTags: ({ count }) => `Found ${count} total tags.`,
+    },
+    encryptedContent: {
+      loading: "Loading 🔃",
+      password: "Password",
+      submit: "Submit",
+      enterPassword: "This page is locked. Please enter password to unlock:",
+      modernBrowser: "Please use a more modern browser to enable unlocking this page.",
+      wrongPassword: "Wrong password. Please enter the password:",
+      noPayload: "No encrypted payload.",
+      decrypting: "Decrypting...",
+      defaultDescription: "This page is encrypted.",
     },
   },
 } as const satisfies Translation

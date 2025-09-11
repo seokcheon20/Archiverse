@@ -55,20 +55,36 @@ export function byDateAndAlphabeticalFolderFirst(cfg: GlobalConfiguration): Sort
 type Props = {
   limit?: number
   sort?: SortFn
+  isTagPage?: string
 } & QuartzComponentProps
 
-export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort }: Props) => {
+export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort, isTagPage }: Props) => {
   const sorter = sort ?? byDateAndAlphabeticalFolderFirst(cfg)
   let list = allFiles.sort(sorter)
   if (limit) {
     list = list.slice(0, limit)
   }
 
+  // Filter out pages with the tag "listing-exclude"
+  list = list.filter(page => !page.frontmatter?.tags?.includes("listing-exclude"))
+
   return (
     <ul class="section-ul">
       {list.map((page) => {
-        const title = page.frontmatter?.title
-        const tags = page.frontmatter?.tags ?? []
+        let title = page.frontmatter?.title
+        const unfilteredTags = page.frontmatter?.tags ?? []
+        const _excludeStrings = ["exclude"]
+        const tags = unfilteredTags.filter(tag => !_excludeStrings.some(excludeString => tag.includes(excludeString)));
+        const slugParts = page.slug?.split("/");
+        const trimmedSlug = slugParts?.slice(0, -1).join("/");
+
+        // Add 📂 emoji in front of folder names and use the second-to-last segment as the title if the current segment is "index"
+        if (isFolderPath(page.slug ?? "")) {
+          const segments = page.slug?.split("/") ?? []
+          let segmentHint = segments.length > 1 ? segments[segments.length - 2] : segments[0]
+          segmentHint = segmentHint.replace(/-/g, ' ')
+          title = page.frontmatter?.title && page.frontmatter.title !== "index" ? `📂 ${page.frontmatter.title}` : `📂 ${segmentHint}`
+        }
 
         return (
           <li class="section-li">
@@ -81,11 +97,17 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                   <a href={resolveRelative(fileData.slug!, page.slug!)} class="internal">
                     {title}
                   </a>
+                  {/* Show the trimmed slug only if it's a tag page, and desktoponly is applied by the class */}
+                  {isTagPage && (
+                    <span class="slug-pagelist desktop-only" title="Slug">
+                      ⟡ {trimmedSlug ? `/${trimmedSlug}/` : '/'}
+                    </span>
+                  )}
                 </h3>
               </div>
-              <ul class="tags">
+              {/* <ul class="tags">
                 {tags.map((tag) => (
-                  <li>
+                  <li key={tag}>
                     <a
                       class="internal tag-link"
                       href={resolveRelative(fileData.slug!, `tags/${tag}` as FullSlug)}
@@ -94,7 +116,7 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                     </a>
                   </li>
                 ))}
-              </ul>
+              </ul> */}
             </div>
           </li>
         )

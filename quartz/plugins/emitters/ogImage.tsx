@@ -29,6 +29,11 @@ async function generateSocialImage(
   { cfg, description, fonts, title, fileData }: ImageOptions,
   userOpts: SocialImageOptions,
 ): Promise<Readable> {
+  // console.log("Generating social image with the following details:");
+  // console.log("Title:", title);
+  // console.log("Description:", description);
+  // console.log("File data:", fileData);
+
   const { width, height } = userOpts
   const iconPath = joinSegments(QUARTZ, "static", "icon.png")
   let iconBase64: string | undefined = undefined
@@ -156,7 +161,7 @@ export const CustomOgImages: QuartzEmitterPlugin<Partial<SocialImageOptions>> = 
             const generatedOgImagePath = isRealFile
               ? `https://${baseUrl}/${pageData.slug!}-og-image.webp`
               : undefined
-            const defaultOgImagePath = `https://${baseUrl}/static/og-image.png`
+            const defaultOgImagePath = `https://${baseUrl}/static/hello-there-banner.png`
             const ogImagePath = userDefinedOgImagePath ?? generatedOgImagePath ?? defaultOgImagePath
             const ogImageMimeType = `image/${getFileExtension(ogImagePath) ?? "png"}`
             return (

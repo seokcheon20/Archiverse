@@ -3,9 +3,10 @@
 .search {
   min-width: fit-content;
   max-width: 14rem;
-  @media all and ($mobile) {
-    flex-grow: 0.3;
-  }
+  height: fit-content;
+  // @media all and ($mobile) {
+  //   flex-grow: 0.3;
+  // }
 
   & > .search-button {
     background-color: color-mix(in srgb, var(--lightgray) 60%, var(--light));

@@ -12,14 +12,14 @@ export interface PluginTypes {
   emitters: QuartzEmitterPluginInstance[]
 }
 
-export type OptionType = object | undefined
+type OptionType = object | undefined
+type ExternalResourcesFn = (ctx: BuildCtx) => Partial<StaticResources> | undefined
 export type QuartzTransformerPlugin<Options extends OptionType = undefined> = (
   opts?: Options,
 ) => QuartzTransformerPluginInstance
 export type QuartzTransformerPluginInstance = {
   name: string
-  options?: OptionType
-  textTransform?: (ctx: BuildCtx, src: string | Buffer) => string | Buffer
+  textTransform?: (ctx: BuildCtx, src: string) => string
   markdownPlugins?: (ctx: BuildCtx) => PluggableList
   htmlPlugins?: (ctx: BuildCtx) => PluggableList
   externalResources?: ExternalResourcesFn

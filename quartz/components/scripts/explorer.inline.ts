@@ -111,6 +111,8 @@ function createFolderNode(
   const folderPath = node.slug
   folderContainer.dataset.folderpath = folderPath
 
+  const folderName = node.displayName.replace("📂", "").trim() // Remove the 📂 emoji and trim any leading/trailing whitespace
+
   if (opts.folderClickBehavior === "link") {
     // Replace button with link for link behavior
     const button = titleContainer.querySelector(".folder-button") as HTMLElement
@@ -118,11 +120,11 @@ function createFolderNode(
     a.href = resolveRelative(currentSlug, folderPath)
     a.dataset.for = folderPath
     a.className = "folder-title"
-    a.textContent = node.displayName
+    a.textContent = folderName
     button.replaceWith(a)
   } else {
     const span = titleContainer.querySelector(".folder-title") as HTMLElement
-    span.textContent = node.displayName
+    span.textContent = folderName
   }
 
   // if the saved state is collapsed or the default state is collapsed

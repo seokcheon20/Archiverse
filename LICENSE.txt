@@ -1,15 +1,3 @@
-** CONTENT **
-
-Copyright (c) 2024 bfahrenfort. All rights reserved.
-
-Written content (under the content/ folder): All rights reserved. I authorize deep links to webpages containing the content herein for citation/attribution purposes, and I authorize the limited reproduction necessary to effectuate the primary purpose of your work.
-
-** CODE **
-
-The generator and all code and configuration is MIT licensed. Copyright notice for the parts that I created and the contributions of others is reproduced below.
-
-** CODE **
-
 MIT License
 
 Copyright (c) 2021 jackyzha0

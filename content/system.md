@@ -4,7 +4,7 @@ aliases:
   - Archiverse documentation
 tags:
   - main/system
-permalink: /system
+date: 2025-09-10
 ---
 # 'Archiverse : 삶은 기록 너머 우주' 기록 체계 기술서
 ## 1. 📑 노트의 속성 구조 │ Note Properties

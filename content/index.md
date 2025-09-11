@@ -4,9 +4,8 @@ aliases:
   - Archiverse home
 tags:
   - main/index
-permalink: /index
+date: 2025-09-11
 ---
-![[og-image.png]]
 ![[og-image1.png]]
 ```poetry
 Welcome to Archiverse!

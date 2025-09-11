@@ -6,6 +6,7 @@ tags:
   - main/personal
 draft: true
 publish: false
+date: 2025-09-10
 ---
 #  Personal Dashboardhboard
 

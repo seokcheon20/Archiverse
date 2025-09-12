@@ -10,7 +10,7 @@ import { customImageStructure } from "./quartz/util/og"
 const config: QuartzConfig = {
   configuration: {
     defaultDateType: "modified",
-    pageTitle: "🌱Archiverse : 삶은 기록 너머 우주🪴 Projects 🌓 Py",
+    pageTitle: "🌱Archiverse : 삶은 기록 너머 우주🌓",
     enableSPA: true,
     enablePopovers: true,
     analytics: null,
@@ -21,7 +21,7 @@ const config: QuartzConfig = {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
-        header: "Gugi",
+        header: "Orbit",
         body: "Gowun Batang",
         code: "Fira Code",
       },
